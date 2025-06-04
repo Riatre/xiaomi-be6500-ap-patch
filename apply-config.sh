@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # Remove bloats from cron.
 cat > /etc/crontabs/root <<EOF
 */2 * * * * command -v logrotate >/dev/null && logrotate /etc/logrotate.conf
@@ -19,3 +21,12 @@ uci set otapred.settings.enabled=0
 uci set misc.ota_pred.download=0
 uci commit otapred
 uci commit misc
+
+# Disable hidden backhaul AP (I don't use Mesh)
+uci set wireless.bh_ap_2g.disabled=1
+uci set wireless.bh_ap_5g.disabled=1
+# Disable hidden MIoT netcfg AP
+# wireless.miot_2G.encryption='none', no firewall, seriously?
+# (well, there are firewall rules for MIoT, but guess what, it's disabled for lanapmode)
+uci set wireless.miot_2G.disabled=1
+uci commit wireless

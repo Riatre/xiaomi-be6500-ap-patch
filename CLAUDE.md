@@ -5,7 +5,7 @@ The router is on QCA platform and runs a heavily modified QSDK (which itself is 
 Goal:
 * Debloat - remove all unnecessary components, for example I don't use their app management feature (which is scary, requires a MQTT connection to their server, meaning that Xiaomi servers can just push whatever they want to my router).
 * Use the router as a wireless access point. The device has a built-in AP mode which mostly works, but has some warts.
-* Have a guest WiFi SSID which is password protected. It should forward traffic to my main router with VLAN tag=1919. This is not something the device supports out of the box.
+* Have a guest WiFi SSID which is password protected. It should forward traffic to my main router with VLAN tag=9. This is not something the device supports out of the box.
 
 Progress:
 * Found a way to get SSH root access to the router.

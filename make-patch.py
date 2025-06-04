@@ -22,6 +22,8 @@ PATCHED_FILES = {
 }
 EXTRA_FILES = {
     "early-boot-hook": "patch/early-boot-hook",
+    "guest-wifi.sh": "guest-wifi.sh",
+    "debloat-once.sh": "apply-config.sh",
 }
 
 
