@@ -15,7 +15,25 @@ from io import BytesIO
 # Configuration: Map target paths to source files in the project
 PATCHED_FILES = {
     "/etc/rc.local": "patch/rc.local",
+    "/etc/init.d/dropbear": "patch/dropbear",
+    "/etc/init.d/telnet": "patch/telnet",
+    # Used to call boot hook script.
+    "/etc/init.d/sysfixtime": "patch/sysfixtime",
 }
+EXTRA_FILES = {
+    "early-boot-hook": "patch/early-boot-hook",
+}
+
+
+def _addfile(tar: tarfile.TarFile, target_path: str, content: bytes, mode: int):
+    file_info = tarfile.TarInfo(name=target_path)
+    file_info.size = len(content)
+    file_info.mode = mode
+    file_info.uid = 0
+    file_info.gid = 0
+    file_info.uname = "root"
+    file_info.gname = "root"
+    tar.addfile(file_info, BytesIO(content))
 
 
 def create_hotupgrade_package():
@@ -26,38 +44,21 @@ def create_hotupgrade_package():
     # Create tar in memory
     with tarfile.open(tar_filename, "w") as tar:
         # Add status file
-        status_info = tarfile.TarInfo(name=f"{package_name}/hotupgrade_status")
-        status_info.size = 1
-        status_info.mode = 0o644
-        status_info.uid = 0
-        status_info.gid = 0
-        status_info.uname = "root"
-        status_info.gname = "root"
-        tar.addfile(status_info, BytesIO(b"0"))
+        _addfile(tar, f"{package_name}/hotupgrade_status", b"0", 0o644)
 
+        files = {
+            f"{package_name}/mountfile{dest}": src
+            for dest, src in PATCHED_FILES.items()
+        }
+        files |= {
+            f"{package_name}/extra/{dest}": src for dest, src in EXTRA_FILES.items()
+        }
         # Add each patch file
-        for target_path, source_file in PATCHED_FILES.items():
+        for target_path, source_file in files.items():
             source_path = Path(source_file)
-            if not source_path.exists():
-                raise FileNotFoundError(f"Source file {source_file} does not exist")
-
-            # Read source file
-            file_content = source_path.read_bytes()
-            file_mode = source_path.stat().st_mode & 0o777
-
-            # Create tar info for the file
-            tar_path = f"{package_name}/mountfile{target_path}"
-            file_info = tarfile.TarInfo(name=tar_path)
-            file_info.size = len(file_content)
-            file_info.mode = file_mode
-            file_info.uid = 0
-            file_info.gid = 0
-            file_info.uname = "root"
-            file_info.gname = "root"
-
-            # Add file to tar
-            tar.addfile(file_info, BytesIO(file_content))
-            print(f"Added {target_path} -> {source_file} (mode: {oct(file_mode)})")
+            mode = source_path.stat().st_mode & 0o777
+            _addfile(tar, target_path, source_path.read_bytes(), mode)
+            print(f"Added {target_path} -> {source_file} (mode: {oct(mode)})")
 
     print(f"\nHotupgrade package created: {tar_filename}")
     print(

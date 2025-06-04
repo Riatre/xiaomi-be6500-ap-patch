@@ -1,0 +1,42 @@
+#!/bin/sh
+
+stub_out_service() {
+    _service_file="/etc/init.d/$1"
+    _tmp_file="${_service_file}.tmp"
+    
+    if [ ! -f "$_service_file" ]; then
+        echo "Service file $_service_file not found" >&2
+        return 1
+    fi
+
+    {
+        cat "$_service_file"
+        echo
+        echo 'unset -f start_service'
+        echo 'start_service() {'
+        echo '  return 0'
+        echo '}'
+    } > "$_tmp_file" && chmod +x "$_tmp_file" && mv "$_tmp_file" "$_service_file"
+}
+
+nuke() {
+    stub_out_service "$1"
+    /etc/init.d/"$1" disable
+    # No need to stop, we run early enough in the boot process.
+}
+
+# These services are either loyal to Xiaomi or are not needed (mesh wifi etc)
+# and are removed for the sake of attack surface reduction.
+nuke xqbc
+nuke cab_meshd
+nuke miwifi-discovery
+nuke xiaoqiang_sync
+nuke mosquitto
+nuke tbusd
+nuke trafficd
+nuke messagingagent.sh
+nuke xq_info_sync_mqtt
+nuke smartcontroller
+
+# Disable nginx, but do not stub it out, we may want to start it via ssh later.
+/etc/init.d/nginx disable
