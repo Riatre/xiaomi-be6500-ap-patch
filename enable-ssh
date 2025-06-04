@@ -1,0 +1,48 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = [
+#   "pwntools",
+# ]
+# ///
+
+from pwn import remote, args
+import getpass
+import hashlib
+
+
+def calculate_default_password(sn: str) -> str:
+    r1d_salt = "A2E371B0-B34B-48A5-8C40-A7133F3B5D88"
+    # Salt must be reversed for non-R1D devices
+    others_salt = "d44fb0960aa0-a5e6-4a30-250f-6d2df50a"
+    others_salt_rev = "-".join(others_salt.split("-")[::-1])
+
+    salt = others_salt_rev if "/" in sn else r1d_salt
+    return hashlib.md5((sn + salt).encode()).hexdigest()[:8]
+
+
+password = None
+try:
+    with open("sn.txt", "r") as f:
+        sn = f.read().strip()
+        password = calculate_default_password(sn).encode()
+except FileNotFoundError:
+    pass
+
+
+r = remote(args.HOST or "172.30.80.173", args.PORT or 23)
+r.sendlineafter(b"login: ", b"root")
+if password:
+    r.sendlineafter(b"Password: ", password)
+    res = r.recvuntil([b"root@XiaoQiang", b"Login incorrect"])
+else:
+    res = None
+if res is None or b"Login incorrect" in res:
+    password = getpass.getpass().encode()
+    r.sendlineafter(b"Password: ", password)
+
+r.sendlineafter(
+    b"# ", b"""sed -i 's/-o "$channel" = "release"//g' /etc/init.d/dropbear"""
+)
+r.sendlineafter(b"# ", b"/etc/init.d/dropbear restart; echo O``K")
+r.recvuntil(b"OK")
+print("OK")
