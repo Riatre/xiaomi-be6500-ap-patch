@@ -136,7 +136,8 @@ start_service()
 	fi
 
 	# Persist /etc/dropbear.
-	[ -d /etc/dropbear ] || (mkdir -p /data/etc/dropbear ln -s /data/etc/dropbear /etc/dropbear)
+	mkdir -p /etc/dropbear || true
+	cp /data/etc/dropbear/* /etc/dropbear/ || true
 	[ -s /etc/dropbear/dropbear_rsa_host_key ] || keygen
 
 	. /lib/functions.sh
