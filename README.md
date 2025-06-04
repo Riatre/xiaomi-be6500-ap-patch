@@ -4,6 +4,7 @@ Mod my MiWiFi RN02 (Xiaomi BE6500, **not** the Pro one) Router to disable bullsh
 
 ## Start
 
+Put the serial number of your device in `sn.txt`.
 Use one of the exploits documented in https://github.com/openwrt-xiaomi/xmir-patcher. Reset the router after and use `./enable-ssh` to bring back SSH.
 
 Then, go to the web interface, enable AP mode, tweak settings as you like.

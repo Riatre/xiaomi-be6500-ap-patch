@@ -40,7 +40,3 @@ nuke smartcontroller
 
 # Disable nginx, but do not stub it out, we may want to start it via ssh later.
 /etc/init.d/nginx disable
-# We are in lanapmode, so why do we need dnsmasq?
-# NOTE: This bricks the router from resolving domain name on the host, but again
-#       why would an AP need to connect to the Internet?
-/etc/init.d/dnsmasq disable
